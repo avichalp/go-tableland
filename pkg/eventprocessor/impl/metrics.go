@@ -20,21 +20,32 @@ func (ep *EventProcessor) initMetrics(chainID tableland.ChainID) error {
 	if err != nil {
 		return fmt.Errorf("creating execution round gauge: %s", err)
 	}
+
 	mLastProcessedHeight, err := meter.AsyncInt64().Gauge("tableland.eventprocessor.last.processed.height")
 	if err != nil {
 		return fmt.Errorf("creating last processed height gauge: %s", err)
 	}
+
 	mHashCalculationElapsedTime, err := meter.AsyncInt64().Gauge("tableland.eventprocessor.hash.calculation.elapsed.time")
 	if err != nil {
 		return fmt.Errorf("creating hash calculation elapsed time gauge: %s", err)
 	}
+
+	mTreeLeavesCalculationElapsedTime, err := meter.
+		AsyncInt64().
+		Gauge("tableland.eventprocessor.tree.leaves.calculation.elapsed.time")
+	if err != nil {
+		return fmt.Errorf("creating hash calculation elapsed time gauge: %s", err)
+	}
+
 	err = meter.RegisterCallback([]instrument.Asynchronous{
-		mExecutionRound, mLastProcessedHeight, mHashCalculationElapsedTime,
+		mExecutionRound, mLastProcessedHeight, mHashCalculationElapsedTime, mTreeLeavesCalculationElapsedTime,
 	},
 		func(ctx context.Context) {
 			mExecutionRound.Observe(ctx, ep.mExecutionRound.Load(), ep.mBaseLabels...)
 			mLastProcessedHeight.Observe(ctx, ep.mLastProcessedHeight.Load(), ep.mBaseLabels...)
 			mHashCalculationElapsedTime.Observe(ctx, ep.mHashCalculationElapsedTime.Load(), ep.mBaseLabels...)
+			mTreeLeavesCalculationElapsedTime.Observe(ctx, ep.mTreeLeavesCalculationElapsedTime.Load(), ep.mBaseLabels...)
 		})
 	if err != nil {
 		return fmt.Errorf("registering async metric callback: %s", err)
